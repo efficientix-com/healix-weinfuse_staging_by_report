@@ -15,6 +15,8 @@ define([], () => {
   RECORDS.CONFIG.FIELDS.URL1 = 'custrecord_weinfuse_config_url1'
   RECORDS.CONFIG.FIELDS.URL2 = 'custrecord_weinfuse_config_url2'
   RECORDS.CONFIG.FIELDS.URL3 = 'custrecord_weinfuse_config_url3'
+  RECORDS.CONFIG.FIELDS.REPORT1 = 'custrecord_weinfuse_config_report1'
+  RECORDS.CONFIG.FIELDS.REPORT2 = 'custrecord_weinfuse_config_report2'
 
   RECORDS.WEINFUSE = {}
   RECORDS.WEINFUSE.ID = 'customrecord_weinfuse'
@@ -61,6 +63,24 @@ define([], () => {
   RECORDS.LOCATION.FIELDS.INTERNALID = 'internalid'
   RECORDS.LOCATION.FIELDS.NAME = 'name'
   RECORDS.LOCATION.FIELDS.ISINACTIVE = 'isinactive'
+
+  RECORDS.STAGING = {}
+  RECORDS.STAGING.ID = 'customrecord_staging'
+  RECORDS.STAGING.FIELDS = {}
+  RECORDS.STAGING.FIELDS.WE_INFUSE = 'custrecord_staging_we_infuse'
+  RECORDS.STAGING.FIELDS.LINE_ID = 'custrecord_staging_line_id'
+  RECORDS.STAGING.FIELDS.CUSTOMER = 'custrecord_staging_customer'
+  RECORDS.STAGING.FIELDS.LOCATION = 'custrecord_staging_location'
+  RECORDS.STAGING.FIELDS.SHIP_TO = 'custrecord_staging_ship_to'
+  RECORDS.STAGING.FIELDS.ITEM = 'custrecord_staging_item'
+  RECORDS.STAGING.FIELDS.ITEM_STATUS = 'custrecord_staging_item_status'
+  RECORDS.STAGING.FIELDS.NDC = 'custrecord_staging_ndc'
+  RECORDS.STAGING.FIELDS.UNIT = 'custrecord_staging_unit'
+  RECORDS.STAGING.FIELDS.QUANTITY = 'custrecord_staging_quantity'
+  RECORDS.STAGING.FIELDS.PRICE = 'custrecord_staging_price'
+  RECORDS.STAGING.FIELDS.DATE = 'custrecord_staging_date'
+  RECORDS.STAGING.FIELDS.TRANSACTION_CREATED = 'custrecord_staging_transaction_created'
+  RECORDS.STAGING.FIELDS.LOT = 'custrecord_staging_lot'
 
   const JSON_STRUCTURE = {}
   JSON_STRUCTURE.GROUP_ID = 'group.id'
