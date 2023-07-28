@@ -17,6 +17,7 @@ define([], () => {
   RECORDS.CONFIG.FIELDS.URL3 = 'custrecord_weinfuse_config_url3'
   RECORDS.CONFIG.FIELDS.REPORT1 = 'custrecord_weinfuse_config_report1'
   RECORDS.CONFIG.FIELDS.REPORT2 = 'custrecord_weinfuse_config_report2'
+  RECORDS.CONFIG.FIELDS.IS_CORE = 'custrecord_weinfuse_config_is_core'
 
   RECORDS.WEINFUSE = {}
   RECORDS.WEINFUSE.ID = 'customrecord_weinfuse'
@@ -81,6 +82,7 @@ define([], () => {
   RECORDS.STAGING.FIELDS.DATE = 'custrecord_staging_date'
   RECORDS.STAGING.FIELDS.TRANSACTION_CREATED = 'custrecord_staging_transaction_created'
   RECORDS.STAGING.FIELDS.LOT = 'custrecord_staging_lot'
+  RECORDS.STAGING.FIELDS.PATIENTID = 'custrecord_staging_patient_id'
 
   const JSON_STRUCTURE = {}
   JSON_STRUCTURE.GROUP_ID = 'group.id'
@@ -103,6 +105,7 @@ define([], () => {
   JSON_STRUCTURE.ITEMS_CREATED_TIME = 'inventory_items.created_time'
   JSON_STRUCTURE.ITEMS_INVENTORY_ITEM_ID = 'inventory_items.inventory_item_id'
   JSON_STRUCTURE.ITEMS_LINE_ITEM_ID = 'inventory_items.line_item_id'
+  JSON_STRUCTURE.WEINFUSE_UID = 'patients_inventory.id'
 
   const LIST = {}
 

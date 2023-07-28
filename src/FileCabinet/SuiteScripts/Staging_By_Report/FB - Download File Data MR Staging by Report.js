@@ -4,7 +4,15 @@
  */
 
 // eslint-disable-next-line no-undef
-define(['N/config', 'N/https', 'N/log', 'N/record', 'N/search', './FB - Const Lib Staging by report.js', './extras/moment.js'], /**
+define([
+  'N/config',
+  'N/https',
+  'N/log',
+  'N/record',
+  'N/search',
+  './FB - Const Lib Staging by report.js',
+  './extras/moment.js'
+], /**
  * @param {config} config
  * @param {https} https
  * @param {log} log
@@ -41,7 +49,7 @@ define(['N/config', 'N/https', 'N/log', 'N/record', 'N/search', './FB - Const Li
         log.audit('Step:', 'Get Looker')
         const lookerInfo = getLookerInformation(token)
         log.audit('Step:', 'Get Data')
-        log.debug({title:'lookerInfo', details:lookerInfo});
+        log.debug({ title: 'lookerInfo', details: lookerInfo })
         const results = getQueryResults(lookerInfo.query_id, token)
         results.forEach(result => {
           data.push(result)
@@ -56,10 +64,10 @@ define(['N/config', 'N/https', 'N/log', 'N/record', 'N/search', './FB - Const Li
         blocksData.push(block)
       }
       log.audit('getInputData ~ blocks_data:', blocksData.length)
-      log.debug({title:'return', details:blocksData[0]});
-      return blocksData[0]
+      log.debug({ title: 'return', details: blocksData[0] })
+      // return blocksData[0]
       // COMMENT: All data
-      // return data
+      return data
     } catch (err) {
       log.error('Error on getInputData', err)
     }
@@ -118,14 +126,22 @@ define(['N/config', 'N/https', 'N/log', 'N/record', 'N/search', './FB - Const Li
   const reduce = reduceContext => {
     try {
       const { key, values } = reduceContext
-      const { WEINFUSE } = RECORDS
+      // const { WEINFUSE } = RECORDS
       values.forEach(value => {
+        const resulObj = { success: false, type: '' }
         value = JSON.parse(value)
-        var newStaging = createStagingRecord(value);
-        log.debug({title:'newSatging', details:newStaging});
-        if (newStaging.success == false || !newStaging.recordId) {
-          log.error({title:'Error creating the staging', details:newStaging.error});
+        const newStaging = createStagingRecord(value)
+        log.debug({ title: 'newSatging', details: newStaging })
+        if (newStaging.success === false || !newStaging.recordId) {
+          log.error({ title: 'Error creating the staging', details: { error: newStaging.error, data: value } })
+        } else {
+          resulObj.success = true
+          resulObj.type = 'created'
         }
+        reduceContext.write({
+          key,
+          value: resulObj
+        })
       })
     } catch (err) {
       log.error('Error on reduce', err)
@@ -155,20 +171,20 @@ define(['N/config', 'N/https', 'N/log', 'N/record', 'N/search', './FB - Const Li
     try {
       log.audit('Status process', 'Process Complete')
       const { output } = summaryContext
-      const counterCreated = 0
-      let counterUpdated = 0
-      const counterFails = 0
+      let counterCreated = 0
+      const counterUpdated = 0
+      let counterFails = 0
       output.iterator().each((key, value) => {
-        // const line = JSON.parse(value)
-        // if (line.status === 'success') {
-        //   if (line.type === 'created') {
-        //     counterCreated++
-        //   } else if (line.type === 'updated') {
-        counterUpdated++
-        //   }
-        // } else if (line.status === 'fail') {
-        //   counterFails++
-        // }
+        const line = JSON.parse(value)
+        if (line.success) {
+          if (line.type === 'created') {
+            counterCreated++
+            //   } else if (line.type === 'updated') {
+            // counterUpdated++
+          }
+        } else {
+          counterFails++
+        }
         return true
       })
       log.audit(
@@ -247,7 +263,7 @@ define(['N/config', 'N/https', 'N/log', 'N/record', 'N/search', './FB - Const Li
       const headerObj = {
         Authorization: `Bearer ${accessToken}`
       }
-      MAIN_CONFIG[CONFIG.FIELDS.URL2] = MAIN_CONFIG[CONFIG.FIELDS.URL2] + MAIN_CONFIG[CONFIG.FIELDS.REPORT2];
+      MAIN_CONFIG[CONFIG.FIELDS.URL2] = MAIN_CONFIG[CONFIG.FIELDS.URL2] + MAIN_CONFIG[CONFIG.FIELDS.REPORT2]
       const response = https.get({
         url: MAIN_CONFIG[CONFIG.FIELDS.URL2],
         headers: headerObj
@@ -291,156 +307,32 @@ define(['N/config', 'N/https', 'N/log', 'N/record', 'N/search', './FB - Const Li
         title: 'Error occurred in getQueryResults',
         details: err
       })
-      return [{'group.id':50,'group.name':"C029 Central Texas Neurology Consultants","locations.id":100,"locations.name":"C029 Central Texas Neurology Consultants","orders_inventory.order_series_id":255306,"orders_inventory.id":538187,"appointments_inventory.id":1413066,"appointments_inventory.status":"Complete","patients_inventory.id":74060,"patients_inventory.identifier":"IV74060","inventory_items.ndc_code":"00338004903","inventory_items.outer_ndc_code":"00338004903","inventory_items.label_name":"SODIUM CHLORIDE 0.9% SOLUTION","inventory_items.strength":500,"inventory_items.uom":"ml","inventory_items.lot":"Y418676","inventory_items.expiration_date":"2024-07-31","inventory_items.created_time":"2023-06-06 19:05:50","inventory_items.inventory_item_id":"BB4189564","inventory_items.line_item_id":4917042}]
-      // return false
+      return false
     }
-  }
-
-  /**
-   * The function creates a new record in NetSuite's WEINFUSE record type with data provided in the
-   * input parameter.
-   * @returns The function `createWeInfuseRecord` returns the ID of the newly created record in
-   * NetSuite.
-   */
-  const createWeInfuseRecord = data => {
-    try {
-      const { WEINFUSE } = RECORDS
-      const { FIELDS } = WEINFUSE
-      const objRecord = record.create({ type: WEINFUSE.ID, isDynamic: true })
-      objRecord.setValue({
-        fieldId: FIELDS.WE_INFUSE,
-        value: data[JSON_STRUCTURE.PATIENTS_INVENTORY_ID],
-        ignoreFieldChange: false
-      })
-      objRecord.setValue({
-        fieldId: FIELDS.LINE_ID,
-        value: data[JSON_STRUCTURE.ITEMS_LINE_ITEM_ID],
-        ignoreFieldChange: false
-      })
-      objRecord.setValue({
-        fieldId: FIELDS.NDC,
-        value: data[JSON_STRUCTURE.ITEMS_NDC_CODE],
-        ignoreFieldChange: false
-      })
-      objRecord.setValue({
-        fieldId: FIELDS.QUANTITY,
-        value: data[JSON_STRUCTURE.ITEMS_STRENGTH],
-        ignoreFieldChange: false
-      })
-      // TODO: PARAM STATUS LIST
-      objRecord.setValue({
-        fieldId: FIELDS.STATUS,
-        value: 1,
-        ignoreFieldChange: false
-      })
-      // TODO: Search relationship to price
-      objRecord.setValue({
-        fieldId: FIELDS.PRICE,
-        value: 0,
-        ignoreFieldChange: false
-      })
-      // FIXME: Format dates
-      objRecord.setValue({
-        fieldId: FIELDS.DATE,
-        value: formatDate(data[JSON_STRUCTURE.ITEMS_CREATED_TIME]),
-        ignoreFieldChange: false
-      })
-      objRecord.setValue({
-        fieldId: FIELDS.EXPIRATION,
-        value: formatDate(data[JSON_STRUCTURE.ITEMS_EXPIRATION_DATE]),
-        ignoreFieldChange: false
-      })
-
-      // COMMENT: Include the rest of data
-      objRecord.setValue({ fieldId: FIELDS.OBJECT_LINE, value: JSON.stringify(data), ignoreFieldChange: false })
-      objRecord.setValue({ fieldId: FIELDS.GROUP_ID, value: data[JSON_STRUCTURE.GROUP_ID], ignoreFieldChange: false })
-      objRecord.setValue({
-        fieldId: FIELDS.GROUP_NAME,
-        value: data[JSON_STRUCTURE.GROUP_NAME],
-        ignoreFieldChange: false
-      })
-      objRecord.setValue({
-        fieldId: FIELDS.LOCATION_ID,
-        value: data[JSON_STRUCTURE.LOCATION_ID],
-        ignoreFieldChange: false
-      })
-      objRecord.setValue({
-        fieldId: FIELDS.LOCATION_NAME,
-        value: data[JSON_STRUCTURE.LOCATION_NAME],
-        ignoreFieldChange: false
-      })
-      objRecord.setValue({
-        fieldId: FIELDS.ORD_SER_ID,
-        value: data[JSON_STRUCTURE.ORDER_SERIES_ID],
-        ignoreFieldChange: false
-      })
-      objRecord.setValue({
-        fieldId: FIELDS.ORD_INV_ID,
-        value: data[JSON_STRUCTURE.ORDERS_INVENTORY_ID],
-        ignoreFieldChange: false
-      })
-      objRecord.setValue({
-        fieldId: FIELDS.APPOINTMENT_INV,
-        value: data[JSON_STRUCTURE.APPOINTMENTS_INVENTORY_ID],
-        ignoreFieldChange: false
-      })
-      objRecord.setValue({
-        fieldId: FIELDS.PATIENTS_IDENT,
-        value: data[JSON_STRUCTURE.PATIENTS_INVENTORY_IDENTIFIER],
-        ignoreFieldChange: false
-      })
-      objRecord.setValue({
-        fieldId: FIELDS.OUTER_NDC,
-        value: data[JSON_STRUCTURE.ITEMS_OUTER_NDC_CODE],
-        ignoreFieldChange: false
-      })
-      objRecord.setValue({
-        fieldId: FIELDS.ITEM_LABEL,
-        value: data[JSON_STRUCTURE.ITEMS_LABEL_NAME],
-        ignoreFieldChange: false
-      })
-      objRecord.setValue({ fieldId: FIELDS.UOM, value: data[JSON_STRUCTURE.ITEMS_UOM], ignoreFieldChange: false })
-      objRecord.setValue({ fieldId: FIELDS.LOT, value: data[JSON_STRUCTURE.ITEMS_LOT], ignoreFieldChange: false })
-      objRecord.setValue({
-        fieldId: FIELDS.INVENTORY_ITEM_ID,
-        value: data[JSON_STRUCTURE.ITEMS_INVENTORY_ITEM_ID],
-        ignoreFieldChange: false
-      })
-
-      const recordId = objRecord.save()
-      return recordId
-    } catch (err) {
-      log.error('Error on createWeInfuseRecord', err)
-    }
-  }
-
-  /**
-   * The function updates a record in the WEINFUSE table with the given ID and values.
-   * @param {string|number} id - The id parameter is the internal id of the record that needs to be updated in
-   * NetSuite.
-   * @param {object} values - The `values` parameter is an object that contains the field values to be updated
-   * for a specific record in NetSuite. The keys of the object represent the field IDs and the values
-   * represent the new values to be set for those fields.
-   * @returns The function `updateWeInfuseRecord` returns the `recordId` of the updated record if
-   * successful, or `null` if there was an error.
-   */
-  const updateWeInfuseRecord = (id, values) => {
-    try {
-      const { WEINFUSE } = RECORDS
-      const recordId = record.submitFields({
-        type: WEINFUSE.ID,
-        id,
-        values,
-        options: {
-          enablesourcing: true,
-          ignoreMandatoryFields: true
-        }
-      })
-      return recordId
-    } catch (err) {
-      log.error('Error on updateWeInfuseRecord', err)
-      return null
-    }
+    // return [
+    //   {
+    //     'group.id': 324,
+    //     'group.name': 'C352 Asthma & Allergy of Idaho, PLLC',
+    //     'locations.id': 666,
+    //     'locations.name': "C352B Coeur D'Alene",
+    //     'orders_inventory.order_series_id': 254804,
+    //     'orders_inventory.id': 542682,
+    //     'appointments_inventory.id': 1671485,
+    //     'appointments_inventory.status': 'Complete',
+    //     'patients_inventory.id': 244135,
+    //     'patients_inventory.identifier': 'IV244135',
+    //     'inventory_items.ndc_code': '50242021501',
+    //     'inventory_items.outer_ndc_code': '50242021501',
+    //     'inventory_items.label_name': 'XOLAIR 150 MG/ML SYRINGE',
+    //     'inventory_items.strength': 150,
+    //     'inventory_items.uom': 'mg',
+    //     'inventory_items.lot': '3569128',
+    //     'inventory_items.expiration_date': '2024-04-30',
+    //     'inventory_items.created_time': '2023-06-14 19:28:49',
+    //     'inventory_items.inventory_item_id': 'BB4224655',
+    //     'inventory_items.line_item_id': 4961412
+    //   }
+    // ]
   }
 
   /**
@@ -460,86 +352,56 @@ define(['N/config', 'N/https', 'N/log', 'N/record', 'N/search', './FB - Const Li
     }
   }
 
-  /**
-   * The function searches for locations in a NetSuite account based on a given label.
-   * @param {string} label
-   * @returns The function `searchLocation` returns an object with three properties: `count`, `err`,
-   * and `body`. The `count` property is a number representing the number of search results found. The
-   * `err` property is a boolean indicating whether an error occurred during the search. The `body`
-   * property is an array of objects representing the search results, with each object containing the
-   * internal ID and name
-   */
-  const searchLocation = label => {
-    const response = { count: 0, err: false, body: [] }
-    try {
-      const { LOCATION } = RECORDS
-      label = label.split(' ')
-      const objSearch = search.create({
-        type: search.Type.LOCATION,
-        filters: [[LOCATION.FIELDS.NAME, search.Operator.IS, label[0]]],
-        columns: Object.values(LOCATION.FIELDS).map(f => {
-          return { name: f }
-        })
-      })
-      const countResults = objSearch.runPaged().count
-      if (countResults > 0) {
-        response.count = countResults
-        const results = objSearch.run().getRange({ start: 0, end: 10 })
-        response.body = results.map(result => {
-          return {
-            [LOCATION.FIELDS.INTERNALID]: result.getValue({ name: LOCATION.FIELDS.INTERNALID }),
-            [LOCATION.FIELDS.NAME]: result.getValue({ name: LOCATION.FIELDS.NAME }),
-            [LOCATION.FIELDS.ISINACTIVE]: result.getValue({ name: LOCATION.FIELDS.ISINACTIVE })
-          }
-        })
-      }
-    } catch (err) {
-      log.error('Error on searchLocation', err)
-      response.err = true
-    }
-    return response
-  }
-
   const createStagingRecord = data => {
-    var dateReturn = {success: false, error: '', recordId: ''};
+    const dateReturn = { success: false, error: '', recordId: '' }
     try {
       const { STAGING } = RECORDS
       const { FIELDS } = STAGING
-      log.debug({title:'dataStaging', details:data});
+      getConfig()
+      log.debug({ title: 'dataStaging', details: data })
       const objRecord = record.create({ type: STAGING.ID, isDynamic: true })
       objRecord.setValue({
         fieldId: FIELDS.LINE_ID,
         value: data[JSON_STRUCTURE.ITEMS_LINE_ITEM_ID],
         ignoreFieldChange: false
       })
-      var resultCustomer = getCustomer(data[JSON_STRUCTURE.GROUP_NAME]);
+      const resultCustomer = getCustomer(data[JSON_STRUCTURE.GROUP_NAME])
       // log.debug({title:'resultCustomer', details:resultCustomer});
-      if (resultCustomer.success == false || !resultCustomer.customerId ) {
-        dateReturn.success = false;
-        dateReturn.error = resultCustomer.error;
-        return dateReturn;
+      if (resultCustomer.success === false || !resultCustomer.customerId) {
+        dateReturn.success = false
+        dateReturn.error = resultCustomer.error
+        return dateReturn
       }
       objRecord.setValue({
         fieldId: FIELDS.CUSTOMER,
         value: resultCustomer.customerId,
         ignoreFieldChange: false
       })
-      var resultLocation = getLocation(data[JSON_STRUCTURE.LOCATION_NAME]);
-      // log.debug({title:'resultLocation', details:resultLocation});
-      if (resultLocation.success == false || !resultLocation.locationId) {
-        dateReturn.success = false;
-        dateReturn.error = resultLocation.error
-        return dateReturn
+      if (resultCustomer.category === MAIN_CONFIG[RECORDS.CONFIG.FIELDS.IS_CORE]) {
+        // lineRecord[WEINFUSE.FIELDS.LOCATION] = MAIN_CONFIG[RECORDS.CONFIG.FIELDS.CORE_LOCATION]
+        objRecord.setValue({
+          fieldId: FIELDS.LOCATION,
+          value: MAIN_CONFIG[RECORDS.CONFIG.FIELDS.CORE_LOCATION],
+          ignoreFieldChange: false
+        })
+      } else {
+        const resultLocation = getLocation(data[JSON_STRUCTURE.LOCATION_NAME])
+        // log.debug({title:'resultLocation', details:resultLocation});
+        if (resultLocation.success === false || !resultLocation.locationId) {
+          dateReturn.success = false
+          dateReturn.error = resultLocation.error
+          return dateReturn
+        }
+        objRecord.setValue({
+          fieldId: FIELDS.LOCATION,
+          value: resultLocation.locationId,
+          ignoreFieldChange: false
+        })
       }
-      objRecord.setValue({
-        fieldId: FIELDS.LOCATION,
-        value: resultLocation.locationId,
-        ignoreFieldChange: false
-      })
-      var resultShipTo = getShipTo(data[JSON_STRUCTURE.LOCATION_NAME]);
+      const resultShipTo = getShipTo(data[JSON_STRUCTURE.LOCATION_NAME], resultCustomer.customerId)
       // log.debug({title:'resultShipTo', details:resultShipTo});
-      if (resultShipTo.success == false || !resultShipTo.shipTo) {
-        dateReturn.success = false;
+      if (resultShipTo.success === false || !resultShipTo.shipTo) {
+        dateReturn.success = false
         dateReturn.error = resultShipTo.error
         return dateReturn
       }
@@ -548,10 +410,10 @@ define(['N/config', 'N/https', 'N/log', 'N/record', 'N/search', './FB - Const Li
         value: resultShipTo.shipTo,
         ignoreFieldChange: false
       })
-      var resultItem = getItem(data[JSON_STRUCTURE.ITEMS_OUTER_NDC_CODE]);
+      const resultItem = getItem(data[JSON_STRUCTURE.ITEMS_OUTER_NDC_CODE])
       // log.debug({title:'resultItem', details:resultItem});
-      if (resultItem.success == false || !resultItem.item) {
-        dateReturn.success = false;
+      if (resultItem.success === false || !resultItem.item) {
+        dateReturn.success = false
         dateReturn.error = resultItem.error
         return dateReturn
       }
@@ -581,237 +443,223 @@ define(['N/config', 'N/https', 'N/log', 'N/record', 'N/search', './FB - Const Li
         value: data[JSON_STRUCTURE.ITEMS_LOT],
         ignoreFieldChange: false
       })
+      objRecord.setValue({
+        fieldId: FIELDS.PATIENTID,
+        value: data[JSON_STRUCTURE.PATIENTS_INVENTORY_IDENTIFIER],
+        ignoreFieldChange: false
+      })
+      objRecord.setValue({
+        fieldId: FIELDS.WE_INFUSE,
+        value: data[JSON_STRUCTURE.WEINFUSE_UID],
+        ignoreFieldChange: false
+      })
       const recordId = objRecord.save()
       // return recordId
-      dateReturn.recordId = recordId;
-      dateReturn.success = true;
+      dateReturn.recordId = recordId
+      dateReturn.success = true
     } catch (err) {
       log.error('Error on createStagingRecord', err)
-      dateReturn.success = false;
-      dateReturn.error = err;
+      dateReturn.success = false
+      dateReturn.error = err
     }
-    return dateReturn;
+    return dateReturn
   }
 
   const getCustomer = data => {
-    var dateReturn = {success: false, error: '', customerId: ''};
+    const dateReturn = { success: false, error: '', customerId: '', category: '' }
     try {
-      var nameCustomer = data.split(' ');
-      nameCustomer = nameCustomer[0];
+      let nameCustomer = data.split(' ')
+      nameCustomer = nameCustomer[0]
       // log.debug({title:'nameCustoemr', details:nameCustomer});
-      var customerSearchObj = search.create({
+      const customerSearchObj = search.create({
         type: search.Type.CUSTOMER,
-        filters:
-        [
-           ["entityid","is",nameCustomer]
-        ],
-        columns:
-        [
-           search.createColumn({
-              name: "entityid",
-              sort: search.Sort.ASC,
-              label: "ID"
-           }),
-           search.createColumn({name: "altname", label: "Name"}),
-           search.createColumn({name: "internalid", label: "Internal ID"})
+        filters: [['entityid', 'is', nameCustomer]],
+        columns: [
+          search.createColumn({
+            name: 'entityid',
+            sort: search.Sort.ASC,
+            label: 'ID'
+          }),
+          search.createColumn({ name: 'category', label: 'Category' }),
+          search.createColumn({ name: 'internalid', label: 'Internal ID' })
         ]
-     });
-    var customerresult = customerSearchObj.runPaged({
-      pageSize: 1000
-    });
-    // log.debug("Customer count",customerresult.count);
-    if (customerresult.count > 0) {
-      if (customerresult.count == 1) {
-        customerresult.pageRanges.forEach(function(pageRange){
-          var myPage = customerresult.fetch({index: pageRange.index});
-          myPage.data.forEach(function(result){
-            dateReturn.customerId = result.getValue({name: 'internalid'});
-            dateReturn.success =  true;
-          });
-        });
-      }else{
-        dateReturn.success = false;
-        dateReturn.error = 'More than one customer found';
+      })
+      const customerresult = customerSearchObj.runPaged({
+        pageSize: 1000
+      })
+      // log.debug("Customer count",customerresult.count);
+      if (customerresult.count > 0) {
+        if (customerresult.count === 1) {
+          customerresult.pageRanges.forEach(function (pageRange) {
+            const myPage = customerresult.fetch({ index: pageRange.index })
+            myPage.data.forEach(function (result) {
+              dateReturn.customerId = result.getValue({ name: 'internalid' })
+              dateReturn.category = result.getValue({ name: 'category' })
+              dateReturn.success = true
+            })
+          })
+        } else {
+          dateReturn.success = false
+          dateReturn.error = 'More than one customer found'
+        }
+      } else {
+        dateReturn.success = false
+        dateReturn.error = 'Customer not found'
       }
-    }else{
-      dateReturn.success = false;
-      dateReturn.error = 'Customer not found';
-    }
     } catch (err) {
       log.error('Error on getCustomer', err)
-      dateReturn.success = false;
-      dateReturn.error = err;
+      dateReturn.success = false
+      dateReturn.error = err
     }
-    return dateReturn;
+    return dateReturn
   }
 
   const getLocation = data => {
-    var dateReturn = {success: false, error: '', locationId: ''};
+    const dateReturn = { success: false, error: '', locationId: '' }
     try {
-      var nameLocation = data.split(' ');
-      nameLocation = nameLocation[0];
+      let nameLocation = data.split(' ')
+      nameLocation = nameLocation[0]
       // log.debug({title:'nameLocation', details:nameLocation});
-      var customerSearchObj = search.create({
+      const customerSearchObj = search.create({
         type: search.Type.LOCATION,
-        filters:
-        [
-           ["custrecord_tkidinternal","is",nameLocation]
-        ],
-        columns:
-        [
+        filters: [['custrecord_tkidinternal', 'is', nameLocation]],
+        columns: [
           search.createColumn({
-            name: "name",
+            name: 'name',
             sort: search.Sort.ASC,
-            label: "Name"
-         }),
-         search.createColumn({name: "internalid", label: "Internal ID"})
-        ]
-     });
-    var customerresult = customerSearchObj.runPaged({
-      pageSize: 1000
-    });
-    // log.debug("Customer count",customerresult.count);
-    if (customerresult.count > 0) {
-      if (customerresult.count == 1) {
-        customerresult.pageRanges.forEach(function(pageRange){
-          var myPage = customerresult.fetch({index: pageRange.index});
-          myPage.data.forEach(function(result){
-            dateReturn.locationId = result.getValue({name: 'internalid'});
-            dateReturn.success =  true;
-          });
-        });
-      }else{
-        dateReturn.success = false;
-        dateReturn.error = 'More than one Location found';
-      }
-    }else{
-      dateReturn.success = false;
-      dateReturn.error = 'Location not found';
-    }
-    } catch (err) {
-      log.error('Error on getLocation', err)
-      dateReturn.success = false;
-      dateReturn.error = err;
-    }
-    return dateReturn;
-  }
-
-  const getShipTo = data => {
-    var response = {success: false, error: '', shipTo: ''};
-    try {
-      var nameLocation = data.split(' ');
-      nameLocation = nameLocation[0];
-      // log.debug({title:'nameLocation', details:nameLocation});
-      var customerSearchObj = search.create({
-        type: search.Type.CUSTOMER,
-        filters:
-        [
-           ["addresslabel","is",nameLocation]
-        ],
-        columns:
-        [
-          search.createColumn({
-            name: "entityid",
-            sort: search.Sort.ASC,
-            label: "ID"
-         }),
-         search.createColumn({name: "altname", label: "Name"}),
-         search.createColumn({name: "internalid", label: "Internal ID"}),
-         search.createColumn({
-          name: "addressinternalid",
-          join: "Address",
-          label: "Address Internal ID"
+            label: 'Name'
           }),
-          search.createColumn({
-              name: "addresslabel",
-              join: "Address",
-              label: "Address Label"
-          })
+          search.createColumn({ name: 'internalid', label: 'Internal ID' })
         ]
-      });
-      var customerresult = customerSearchObj.runPaged({
+      })
+      const customerresult = customerSearchObj.runPaged({
         pageSize: 1000
-      });
+      })
       // log.debug("Customer count",customerresult.count);
       if (customerresult.count > 0) {
-        if (customerresult.count == 1) {
-          customerresult.pageRanges.forEach(function(pageRange){
-            var myPage = customerresult.fetch({index: pageRange.index});
-            myPage.data.forEach(function(result){
-              response.shipTo = result.getValue({
-                name: "addressinternalid",
-                join: "Address",
-                label: "Address Internal ID"
-              });
-              response.success =  true;
-            });
-          });
-        }else{
-          response.success = false;
-          response.error = 'More than one Ship To found';
+        if (customerresult.count === 1) {
+          customerresult.pageRanges.forEach(function (pageRange) {
+            const myPage = customerresult.fetch({ index: pageRange.index })
+            myPage.data.forEach(function (result) {
+              dateReturn.locationId = result.getValue({ name: 'internalid' })
+              dateReturn.success = true
+            })
+          })
+        } else {
+          dateReturn.success = false
+          dateReturn.error = 'More than one Location found'
         }
-      }else{
-        response.success = false;
-        response.error = 'Ship To not found';
+      } else {
+        dateReturn.success = false
+        dateReturn.error = 'Location not found'
+      }
+    } catch (err) {
+      log.error('Error on getLocation', err)
+      dateReturn.success = false
+      dateReturn.error = err
+    }
+    return dateReturn
+  }
+
+  const getShipTo = (data, customerId) => {
+    const response = { success: false, error: '', shipTo: '' }
+    try {
+      let nameLocation = data.split(' ')
+      nameLocation = nameLocation[0]
+      // log.debug({title:'nameLocation', details:nameLocation});
+      const customerSearchObj = search.create({
+        type: search.Type.CUSTOMER,
+        filters: [['addresslabel', 'is', nameLocation], 'AND', ['internalid', search.Operator.IS, customerId]],
+        columns: [
+          search.createColumn({ name: 'internalid', label: 'Internal ID' }),
+          search.createColumn({
+            name: 'addressinternalid',
+            label: 'Address Internal ID'
+          }),
+          search.createColumn({
+            name: 'addresslabel',
+            label: 'Address Label'
+          })
+        ]
+      })
+      const customerresult = customerSearchObj.runPaged({
+        pageSize: 1000
+      })
+      // log.debug("Customer count",customerresult.count);
+      if (customerresult.count > 0) {
+        if (customerresult.count === 1) {
+          customerresult.pageRanges.forEach(function (pageRange) {
+            const myPage = customerresult.fetch({ index: pageRange.index })
+            myPage.data.forEach(function (result) {
+              response.shipTo = result.getValue({
+                name: 'addressinternalid',
+                label: 'Address Internal ID'
+              })
+              response.success = true
+            })
+          })
+        } else {
+          response.success = false
+          response.error = 'More than one Ship To found'
+        }
+      } else {
+        response.success = false
+        response.error = 'Ship To not found'
       }
     } catch (err) {
       log.error('Error on getShipTo', err)
-      response.success = false;
-      response.error = err;
+      response.success = false
+      response.error = err
     }
-    return response;
+    return response
   }
 
   const getItem = data => {
-    var response = {success: false, error: '', item: ''};
+    const response = { success: false, error: '', item: '' }
     try {
       // log.debug({title:'data', details:data});
-      var itemSearchObj = search.create({
+      const itemSearchObj = search.create({
         type: search.Type.ITEM,
-        filters:
-        [
-           ["name","is",data]
-        ],
-        columns:
-        [
+        filters: [['name', 'is', data]],
+        columns: [
           search.createColumn({
-            name: "itemid",
+            name: 'itemid',
             sort: search.Sort.ASC,
-            label: "Name"
-         }),
-         search.createColumn({name: "displayname", label: "Display Name"}),
-         search.createColumn({name: "salesdescription", label: "Description"}),
-         search.createColumn({name: "type", label: "Type"}),
-         search.createColumn({name: "internalid", label: "Internal ID"})
+            label: 'Name'
+          }),
+          search.createColumn({ name: 'displayname', label: 'Display Name' }),
+          search.createColumn({ name: 'salesdescription', label: 'Description' }),
+          search.createColumn({ name: 'type', label: 'Type' }),
+          search.createColumn({ name: 'internalid', label: 'Internal ID' })
         ]
-      });
-      var itemResult = itemSearchObj.runPaged({
+      })
+      const itemResult = itemSearchObj.runPaged({
         pageSize: 1000
-      });
+      })
       // log.debug("Item count",itemResult.count);
       if (itemResult.count > 0) {
-        if (itemResult.count == 1) {
-          itemResult.pageRanges.forEach(function(pageRange){
-            var myPage = itemResult.fetch({index: pageRange.index});
-            myPage.data.forEach(function(result){
-              response.item = result.getValue({name: "internalid"});
-              response.success =  true;
-            });
-          });
-        }else{
-          response.success = false;
-          response.error = 'More than one Item found';
+        if (itemResult.count === 1) {
+          itemResult.pageRanges.forEach(function (pageRange) {
+            const myPage = itemResult.fetch({ index: pageRange.index })
+            myPage.data.forEach(function (result) {
+              response.item = result.getValue({ name: 'internalid' })
+              response.success = true
+            })
+          })
+        } else {
+          response.success = false
+          response.error = 'More than one Item found'
         }
-      }else{
-        response.success = false;
-        response.error = 'Item To not found';
+      } else {
+        response.success = false
+        response.error = 'Item To not found'
       }
     } catch (err) {
       log.error('Error on getItem', err)
-      response.success = false;
-      response.error = err;
+      response.success = false
+      response.error = err
     }
-    return response;
+    return response
   }
 
   return { getInputData, map, reduce, summarize }
