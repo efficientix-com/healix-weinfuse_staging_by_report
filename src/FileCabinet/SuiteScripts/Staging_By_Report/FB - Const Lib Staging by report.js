@@ -18,6 +18,7 @@ define([], () => {
   RECORDS.CONFIG.FIELDS.REPORT1 = 'custrecord_weinfuse_config_report1'
   RECORDS.CONFIG.FIELDS.REPORT2 = 'custrecord_weinfuse_config_report2'
   RECORDS.CONFIG.FIELDS.IS_CORE = 'custrecord_weinfuse_config_is_core'
+  RECORDS.CONFIG.FIELDS.CORE_LOCATION = 'custrecord_weinfuse_config_core_loc'
 
   RECORDS.WEINFUSE = {}
   RECORDS.WEINFUSE.ID = 'customrecord_weinfuse'

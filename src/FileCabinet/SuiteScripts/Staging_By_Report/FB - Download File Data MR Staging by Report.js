@@ -311,26 +311,26 @@ define([
     }
     // return [
     //   {
-    //     'group.id': 324,
-    //     'group.name': 'C352 Asthma & Allergy of Idaho, PLLC',
-    //     'locations.id': 666,
-    //     'locations.name': "C352B Coeur D'Alene",
-    //     'orders_inventory.order_series_id': 254804,
-    //     'orders_inventory.id': 542682,
-    //     'appointments_inventory.id': 1671485,
+    //     'group.id': 561,
+    //     'group.name': 'C397 Asthma & Allergy Center, LLC',
+    //     'locations.id': 1100,
+    //     'locations.name': 'C397H Bel Air',
+    //     'orders_inventory.order_series_id': 336746,
+    //     'orders_inventory.id': 486006,
+    //     'appointments_inventory.id': 1758653,
     //     'appointments_inventory.status': 'Complete',
-    //     'patients_inventory.id': 244135,
-    //     'patients_inventory.identifier': 'IV244135',
+    //     'patients_inventory.id': 304804,
+    //     'patients_inventory.identifier': 'IV304804',
     //     'inventory_items.ndc_code': '50242021501',
     //     'inventory_items.outer_ndc_code': '50242021501',
     //     'inventory_items.label_name': 'XOLAIR 150 MG/ML SYRINGE',
     //     'inventory_items.strength': 150,
     //     'inventory_items.uom': 'mg',
-    //     'inventory_items.lot': '3569128',
-    //     'inventory_items.expiration_date': '2024-04-30',
-    //     'inventory_items.created_time': '2023-06-14 19:28:49',
-    //     'inventory_items.inventory_item_id': 'BB4224655',
-    //     'inventory_items.line_item_id': 4961412
+    //     'inventory_items.lot': '3564740',
+    //     'inventory_items.expiration_date': '2024-06-30',
+    //     'inventory_items.created_time': '2023-07-18 21:05:07',
+    //     'inventory_items.inventory_item_id': 'BB4379953',
+    //     'inventory_items.line_item_id': 5135888
     //   }
     // ]
   }
