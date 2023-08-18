@@ -3,7 +3,6 @@
  * @NScriptType MapReduceScript
  */
 
-// eslint-disable-next-line no-undef
 define([
   'N/config',
   'N/https',
@@ -128,19 +127,32 @@ define([
       const { key, values } = reduceContext
       // const { WEINFUSE } = RECORDS
       values.forEach(value => {
-        const resulObj = { success: false, type: '' }
+        const resultObj = { success: false, type: '' }
         value = JSON.parse(value)
         const newStaging = createStagingRecord(value)
-        log.debug({ title: 'newSatging', details: newStaging })
-        if (newStaging.success === false || !newStaging.recordId) {
+        log.debug({ title: 'newStaging', details: newStaging })
+        if (!newStaging.recordId) {
           log.error({ title: 'Error creating the staging', details: { error: newStaging.error, data: value } })
+          // COLOCAR STATUS
+        } else if (newStaging.success === false) {
+          const values = {}
+          values[STAGING.FIELDS.STATUS] = newStaging.errorid
+          const otherId = record.submitFields({
+            type: STAGING.ID,
+            id: newStaging.recordId,
+            values
+          })
+          log.error({
+            title: 'Error finding the staging ' + newStaging.recordId,
+            details: { error: newStaging.error, data: value }
+          })
         } else {
-          resulObj.success = true
-          resulObj.type = 'created'
+          resultObj.success = true
+          resultObj.type = 'created'
         }
         reduceContext.write({
           key,
-          value: resulObj
+          value: resultObj
         })
       })
     } catch (err) {
@@ -438,19 +450,56 @@ define([
         value: formatDate(data[JSON_STRUCTURE.ITEMS_CREATED_TIME]),
         ignoreFieldChange: false
       })
+
+      objRecord.setValue({
+        fieldId: FIELDS.EXPIRATION_DATE,
+        value: formatDate(data[JSON_STRUCTURE.ITEMS_EXPIRATION_DATE]),
+        ignoreFieldChange: false
+      })
       objRecord.setValue({
         fieldId: FIELDS.LOT,
         value: data[JSON_STRUCTURE.ITEMS_LOT],
         ignoreFieldChange: false
       })
       objRecord.setValue({
-        fieldId: FIELDS.PATIENTID,
+        fieldId: FIELDS.PATIENT_ID,
         value: data[JSON_STRUCTURE.PATIENTS_INVENTORY_IDENTIFIER],
+        ignoreFieldChange: false
+      })
+      objRecord.setValue({
+        fieldId: FIELDS.GROUP_NAME,
+        value: data[JSON_STRUCTURE.GROUP_NAME],
+        ignoreFieldChange: false
+      })
+      objRecord.setValue({
+        fieldId: FIELDS.LOCATION_NAME,
+        value: data[JSON_STRUCTURE.LOCATION_NAME],
+        ignoreFieldChange: false
+      })
+
+      objRecord.setValue({
+        fieldId: FIELDS.SHIP_TO_NAME,
+        value: data[JSON_STRUCTURE.LOCATION_NAME].length ? data[JSON_STRUCTURE.LOCATION_NAME].split(' ')[0] : '',
+        ignoreFieldChange: false
+      })
+      objRecord.setValue({
+        fieldId: FIELDS.ITEM_LABEL,
+        value: data[JSON_STRUCTURE.ITEMS_LABEL_NAME],
+        ignoreFieldChange: false
+      })
+      objRecord.setValue({
+        fieldId: FIELDS.UOM,
+        value: data[JSON_STRUCTURE.ITEMS_UOM],
         ignoreFieldChange: false
       })
       objRecord.setValue({
         fieldId: FIELDS.WE_INFUSE,
         value: data[JSON_STRUCTURE.WEINFUSE_UID],
+        ignoreFieldChange: false
+      })
+      objRecord.setValue({
+        fieldId: FIELDS.LINE,
+        value: JSON.stringify(data),
         ignoreFieldChange: false
       })
       const recordId = objRecord.save()
@@ -501,15 +550,18 @@ define([
         } else {
           dateReturn.success = false
           dateReturn.error = 'More than one customer found'
+          dateReturn.errorid = 11
         }
       } else {
         dateReturn.success = false
         dateReturn.error = 'Customer not found'
+        dateReturn.errorid = 10
       }
     } catch (err) {
       log.error('Error on getCustomer', err)
       dateReturn.success = false
       dateReturn.error = err
+      dateReturn.errorid = 9
     }
     return dateReturn
   }
@@ -548,15 +600,18 @@ define([
         } else {
           dateReturn.success = false
           dateReturn.error = 'More than one Location found'
+          dateReturn.errorid = 8
         }
       } else {
         dateReturn.success = false
         dateReturn.error = 'Location not found'
+        dateReturn.errorid = 7
       }
     } catch (err) {
       log.error('Error on getLocation', err)
       dateReturn.success = false
       dateReturn.error = err
+      dateReturn.errorid = 9
     }
     return dateReturn
   }
@@ -601,15 +656,18 @@ define([
         } else {
           response.success = false
           response.error = 'More than one Ship To found'
+          response.errorid = 13
         }
       } else {
         response.success = false
         response.error = 'Ship To not found'
+        response.errorid = 12
       }
     } catch (err) {
       log.error('Error on getShipTo', err)
       response.success = false
       response.error = err
+      response.errorid = 9
     }
     return response
   }
@@ -636,7 +694,6 @@ define([
       const itemResult = itemSearchObj.runPaged({
         pageSize: 1000
       })
-      // log.debug("Item count",itemResult.count);
       if (itemResult.count > 0) {
         if (itemResult.count === 1) {
           itemResult.pageRanges.forEach(function (pageRange) {
@@ -649,15 +706,18 @@ define([
         } else {
           response.success = false
           response.error = 'More than one Item found'
+          response.errorid = 6
         }
       } else {
         response.success = false
         response.error = 'Item To not found'
+        response.errorid = 5
       }
     } catch (err) {
       log.error('Error on getItem', err)
       response.success = false
       response.error = err
+      response.errorid = 9
     }
     return response
   }

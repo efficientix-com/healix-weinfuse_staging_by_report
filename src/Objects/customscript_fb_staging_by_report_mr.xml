@@ -1,21 +1,21 @@
 <mapreducescript scriptid="customscript_fb_staging_by_report_mr">
-  <description></description>
+  <description>This Map/Reduce will get and create the Staging record with the Looker information.</description>
   <isinactive>F</isinactive>
-  <name>Staging by report mr</name>
+  <name>FB - Download Weinfuse Usage MR</name>
   <notifyadmins>F</notifyadmins>
   <notifyemails></notifyemails>
   <notifyowner>T</notifyowner>
-  <scriptfile>[/SuiteScripts/Staging_By_Report/FB - Download File Data MR Staging by Report.js]</scriptfile>
+  <scriptfile>[/SuiteScripts/Staging_By_Report/FB - Download File Data MR Weinfuse Usage by Report.js]</scriptfile>
   <scriptdeployments>
     <scriptdeployment scriptid="customdeploy_fb_staging_by_report_mr">
       <buffersize>1</buffersize>
-      <concurrencylimit>1</concurrencylimit>
+      <concurrencylimit>2</concurrencylimit>
       <isdeployed>T</isdeployed>
       <loglevel>DEBUG</loglevel>
       <queueallstagesatonce>T</queueallstagesatonce>
       <runasrole>ADMINISTRATOR</runasrole>
       <status>NOTSCHEDULED</status>
-      <title>Staging by report mr</title>
+      <title>FB - Download Staging Report</title>
       <yieldaftermins>60</yieldaftermins>
       <recurrence>
         <single>
